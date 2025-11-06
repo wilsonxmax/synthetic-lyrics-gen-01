@@ -22,9 +22,9 @@ def validate_timestamps(audio_path, timestamps_path):
     try:
         audio, sr = sf.read(audio_path)
         audio_duration = len(audio) / sr
-        print(f"✅ Audio loaded: {audio_duration:.2f}s @ {sr}Hz")
+        print(f"Audio loaded: {audio_duration:.2f}s @ {sr}Hz")
     except Exception as e:
-        print(f"❌ Failed to load audio: {e}")
+        print(f"Failed to load audio: {e}")
         return False
     
     # Load timestamps
@@ -32,9 +32,9 @@ def validate_timestamps(audio_path, timestamps_path):
         with open(timestamps_path) as f:
             data = json.load(f)
         timestamps = data['words']
-        print(f"✅ Timestamps loaded: {len(timestamps)} words")
+        print(f"Timestamps loaded: {len(timestamps)} words")
     except Exception as e:
-        print(f"❌ Failed to load timestamps: {e}")
+        print(f"Failed to load timestamps: {e}")
         return False
     
     # Run validation checks
@@ -46,7 +46,7 @@ def validate_timestamps(audio_path, timestamps_path):
     ]
     checks['no_negative_durations'] = len(negative_durations) == 0
     if negative_durations:
-        print(f"⚠️  Found {len(negative_durations)} negative durations")
+        print(f"Found {len(negative_durations)} negative durations")
     
     # 2. No overlaps
     overlaps = []
@@ -55,7 +55,7 @@ def validate_timestamps(audio_path, timestamps_path):
             overlaps.append((i, i+1))
     checks['no_overlaps'] = len(overlaps) == 0
     if overlaps:
-        print(f"⚠️  Found {len(overlaps)} overlapping words")
+        print(f"Found {len(overlaps)} overlapping words")
     
     # 3. Realistic durations (50ms to 10 seconds)
     unrealistic = [
@@ -64,7 +64,7 @@ def validate_timestamps(audio_path, timestamps_path):
     ]
     checks['realistic_durations'] = len(unrealistic) == 0
     if unrealistic:
-        print(f"⚠️  Found {len(unrealistic)} unrealistic durations")
+        print(f"Found {len(unrealistic)} unrealistic durations")
     
     # 4. Within audio bounds
     out_of_bounds = [
@@ -73,7 +73,7 @@ def validate_timestamps(audio_path, timestamps_path):
     ]
     checks['within_bounds'] = len(out_of_bounds) == 0
     if out_of_bounds:
-        print(f"⚠️  Found {len(out_of_bounds)} timestamps outside audio bounds")
+        print(f"Found {len(out_of_bounds)} timestamps outside audio bounds")
     
     # 5. Monotonic (always increasing)
     non_monotonic = []
@@ -82,7 +82,7 @@ def validate_timestamps(audio_path, timestamps_path):
             non_monotonic.append(i)
     checks['monotonic'] = len(non_monotonic) == 0
     if non_monotonic:
-        print(f"⚠️  Found {len(non_monotonic)} non-monotonic timestamps")
+        print(f"Found {len(non_monotonic)} non-monotonic timestamps")
     
     # 6. Basic energy check (words should have audio)
     silent_words = []
@@ -92,12 +92,12 @@ def validate_timestamps(audio_path, timestamps_path):
         segment = audio[start_sample:end_sample]
         energy = np.mean(np.abs(segment))
         
-        if energy < 0.001:  # Very quiet
+        if energy < 0.001:
             silent_words.append(word['text'])
     
-    checks['has_audio_energy'] = len(silent_words) < len(timestamps) * 0.1  # Allow 10% silent
+    checks['has_audio_energy'] = len(silent_words) < len(timestamps) * 0.1
     if silent_words:
-        print(f"⚠️  Found {len(silent_words)} potentially silent words")
+        print(f"Found {len(silent_words)} potentially silent words")
     
     # Print results
     print(f"\n{'='*60}")
@@ -105,7 +105,7 @@ def validate_timestamps(audio_path, timestamps_path):
     print(f"{'='*60}")
     
     for check_name, passed in checks.items():
-        status = "✅ PASS" if passed else "❌ FAIL"
+        status = "PASS" if passed else "FAIL"
         print(f"  {check_name:30s}: {status}")
     
     print(f"{'='*60}\n")
@@ -114,9 +114,9 @@ def validate_timestamps(audio_path, timestamps_path):
     all_passed = all(checks.values())
     
     if all_passed:
-        print("🎉 ALL VALIDATION CHECKS PASSED!\n")
+        print("ALL VALIDATION CHECKS PASSED!\n")
     else:
-        print("⚠️  SOME VALIDATION CHECKS FAILED\n")
+        print("SOME VALIDATION CHECKS FAILED\n")
         failed = [name for name, passed in checks.items() if not passed]
         print(f"Failed checks: {', '.join(failed)}\n")
         exit(1)
@@ -125,32 +125,13 @@ def validate_timestamps(audio_path, timestamps_path):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Validate song timestamps')
-    parser.add_argument('--audio', type=str, required=True, help='Path to audio file')
-    parser.add_argument('--timestamps', type=str, required=True, help='Path to timestamps JSON')
+    parser.add_argument('--audio', type=str, required=True)
+    parser.add_argument('--timestamps', type=str, required=True)
     
     args = parser.parse_args()
     
     try:
         validate_timestamps(args.audio, args.timestamps)
     except Exception as e:
-        print(f"❌ VALIDATION ERROR: {e}")
+        print(f"VALIDATION ERROR: {e}")
         exit(1)
-```
-
----
-
-## **🚀 COMPLETE REPOSITORY STRUCTURE**
-```
-synthetic-lyrics-gen-01/
-├── .github/
-│   └── workflows/
-│       └── generate-songs.yml          # ✅ Updated to v4
-├── scripts/
-│   ├── generate_song.py                # Mock generator (replace later)
-│   └── validate_timestamps.py          # Validation suite
-├── outputs/                             # Created during workflow
-│   ├── song_1.mp3
-│   ├── song_1.json
-│   └── ...
-├── README.md
-└── requirements.txt                     # Dependencies
