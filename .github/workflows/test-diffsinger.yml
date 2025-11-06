@@ -1,0 +1,38 @@
+name: Test DiffSinger Setup
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches:
+      - diffsinger-test
+
+jobs:
+  test-diffsinger:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements-diffsinger.txt
+      
+      - name: Run feasibility tests
+        run: |
+          python scripts/test_diffsinger.py
+      
+      - name: System info
+        run: |
+          echo "=== SYSTEM INFO ==="
+          lscpu | grep -E 'Model name|CPU\(s\)'
+          free -h
+          df -h
+          echo "==================="
