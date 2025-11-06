@@ -19,18 +19,21 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # Updated to v4
       
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5  # Updated to v5
         with:
           python-version: '3.10'
       
-      - name: Install DiffSinger/Suno dependencies
+      - name: Install dependencies
         run: |
           pip install torch torchaudio
-          pip install librosa soundfile
-          # Add DiffSinger or Suno API setup here
+          pip install librosa soundfile numpy scipy
+          pip install requests  # For API calls if needed
+          
+      - name: Create output directory
+        run: mkdir -p outputs
           
       - name: Generate song ${{ matrix.song_index }}
         run: |
@@ -46,7 +49,7 @@ jobs:
             --timestamps outputs/song_${{ matrix.song_index }}.json
       
       - name: Upload artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # ✅ UPDATED TO V4
         with:
           name: song-${{ matrix.song_index }}
           path: |
