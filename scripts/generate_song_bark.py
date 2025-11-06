@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
 Generate synthetic singing using Bark TTS
+Fixed for PyTorch 2.6+ weights_only restrictions
 """
 
 import json
@@ -17,27 +18,43 @@ os.environ['SUNO_OFFLOAD_CPU'] = 'True'
 os.environ['SUNO_USE_SMALL_MODELS'] = 'True'
 
 def load_bark_model():
-    """Load Bark TTS model"""
+    """Load Bark TTS model with PyTorch 2.6+ compatibility"""
     try:
+        import torch
         from bark import SAMPLE_RATE, generate_audio, preload_models
         
         print("🔧 Loading Bark model...")
         print("   (First run downloads ~2GB of model files)")
+        print(f"   PyTorch version: {torch.__version__}")
+        
+        # Fix for PyTorch 2.6+ weights_only restriction
+        # Allow numpy globals that Bark needs
+        if hasattr(torch.serialization, 'add_safe_globals'):
+            print("   Adding safe globals for Bark model loading...")
+            torch.serialization.add_safe_globals([
+                'numpy.core.multiarray.scalar',
+                'numpy.core.multiarray._reconstruct',
+                'numpy.ndarray',
+                'numpy.dtype',
+                'numpy.core.numeric._frombuffer'
+            ])
+        
         start = time.time()
-        
         preload_models()
-        
         elapsed = time.time() - start
-        print(f"✅ Bark model loaded in {elapsed:.1f}s\n")
         
+        print(f"✅ Bark model loaded in {elapsed:.1f}s\n")
         return SAMPLE_RATE
+        
     except ImportError as e:
         print(f"❌ Failed to import Bark: {e}")
-        print("   Falling back to mock generation")
         return None
     except Exception as e:
         print(f"⚠️  Bark model loading failed: {e}")
-        print("   Falling back to mock generation")
+        print("\nFull error details:")
+        import traceback
+        traceback.print_exc()
+        print("\nFalling back to mock generation...")
         return None
 
 def create_singing_prompt(lyrics, style="pop"):
