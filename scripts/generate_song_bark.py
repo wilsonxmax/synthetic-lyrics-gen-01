@@ -28,16 +28,44 @@ def load_bark_model():
         print(f"   PyTorch version: {torch.__version__}")
         
         # Fix for PyTorch 2.6+ weights_only restriction
-        # Allow numpy globals that Bark needs
+        # We need to pass actual class objects, not strings
         if hasattr(torch.serialization, 'add_safe_globals'):
             print("   Adding safe globals for Bark model loading...")
-            torch.serialization.add_safe_globals([
-                'numpy.core.multiarray.scalar',
-                'numpy.core.multiarray._reconstruct',
-                'numpy.ndarray',
-                'numpy.dtype',
-                'numpy.core.numeric._frombuffer'
-            ])
+            try:
+                # Import numpy types directly
+                import numpy.core.multiarray as multiarray
+                
+                # Add the actual class objects
+                safe_globals = []
+                
+                # Add numpy.core.multiarray.scalar if it exists
+                if hasattr(multiarray, 'scalar'):
+                    safe_globals.append(multiarray.scalar)
+                
+                # Add numpy.core.multiarray._reconstruct if it exists
+                if hasattr(multiarray, '_reconstruct'):
+                    safe_globals.append(multiarray._reconstruct)
+                
+                # Add numpy types
+                safe_globals.extend([
+                    np.ndarray,
+                    np.dtype,
+                ])
+                
+                # Try to add _frombuffer if it exists
+                try:
+                    import numpy.core.numeric as numeric
+                    if hasattr(numeric, '_frombuffer'):
+                        safe_globals.append(numeric._frombuffer)
+                except:
+                    pass
+                
+                torch.serialization.add_safe_globals(safe_globals)
+                print(f"   ✓ Added {len(safe_globals)} safe globals")
+                
+            except Exception as e:
+                print(f"   ⚠️  Could not add safe globals: {e}")
+                print("   Will try loading anyway...")
         
         start = time.time()
         preload_models()
